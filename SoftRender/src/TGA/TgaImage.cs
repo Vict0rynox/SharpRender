@@ -280,7 +280,47 @@ namespace SoftRender.TGA
 
         public void Scale(Size size)
         {
-            
+            if (_size.Width <= 0 || _size.Height <= 0 || _data.Length == 0)
+            {
+                throw new OutOfMemoryException("data is empty");
+            }
+            var data = new byte[size.Height * size.Width * _byteSpp];
+
+            int newScanLine = 0;
+            int oldScanLine = 0;
+            int errY = 0;
+            int newLineBytes = size.Width * _byteSpp;
+            int oldLineBytes = _size.Width * _byteSpp;
+            for (int i = 0; i < _size.Height; i++)
+            {
+                int errX = _size.Width - size.Width;
+                int newX = -_byteSpp;
+                int oldX = -_byteSpp;
+                for (int j = 0; j < _size.Width; j++)
+                {
+                    oldX += _byteSpp;
+                    errX += size.Width;
+                    while (errX >= _size.Width)
+                    {
+                        errX -= _size.Width;
+                        newX += _byteSpp;
+                        Array.ConstrainedCopy(_data, oldScanLine + oldX, data, newScanLine + newX, _byteSpp);
+                    }
+                }
+                errY += size.Height;
+                oldScanLine += oldLineBytes;
+                while (errY >= _size.Height)
+                {
+                    if (errY >= (int) _size.Height << 1)
+                    {
+                        Array.ConstrainedCopy(data, newScanLine, data, newLineBytes+newScanLine, newLineBytes);
+                    }
+                    errY -= _size.Height;
+                    newScanLine += newLineBytes;
+                }
+            }
+            _data = data;
+            _size = size;
         }
 
         public void SetPoint(Point point, TgaColor color)
