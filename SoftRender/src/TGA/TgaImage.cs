@@ -280,7 +280,7 @@ namespace SoftRender.TGA
 
         public void Scale(Size size)
         {
-            //TOOD: scale to new size
+            
         }
 
         public void SetPoint(Point point, TgaColor color)
