@@ -4,9 +4,10 @@
     <TargetFramework>netcoreapp2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.UnitTestFramework.Extensions" Version="1.0.0.3" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="tests" />
+    <PackageReference Include="Veldrid" Version="4.0.0-gaa5ff5bed4" />
+    <PackageReference Include="Veldrid.OpenGLBindings" Version="4.0.0-gaa5ff5bed4" />
+    <PackageReference Include="Veldrid.SDL2" Version="4.0.0-gaa5ff5bed4" />
+    <PackageReference Include="Veldrid.StartupUtilities" Version="4.0.0-gaa5ff5bed4" />
+    <PackageReference Include="Veldrid.Utilities" Version="4.0.0-gaa5ff5bed4" />
   </ItemGroup>
 </Project>

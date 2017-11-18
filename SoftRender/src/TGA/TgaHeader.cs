@@ -1,18 +1,21 @@
-﻿namespace SoftRender.TGA
+﻿using System.Runtime.InteropServices;
+
+namespace SoftRender.TGA
 {
+    [StructLayout(LayoutKind.Sequential,Pack=1)]
     public struct TgaHeader
     {
-        public sbyte IdLenght;
+        public byte IdLenght;
 
-        public sbyte ColorMapType;
+        public byte ColorMapType;
 
-        public sbyte DataTypeCode;
+        public byte DataTypeCode;
 
         public short ColorMapOrigin;
 
         public short ColorMapLength;
 
-        public sbyte ColorMapDepth;
+        public byte ColorMapDepth;
 
         public short XOrigin;
 
@@ -22,8 +25,8 @@
 
         public short Height;
 
-        public sbyte BitSperPixel;
+        public byte BitSperPixel;
 
-        public sbyte ImageDescription;
+        public byte ImageDescription;
     }
 }
