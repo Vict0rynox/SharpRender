@@ -18,7 +18,7 @@ namespace SoftRender
             image.WriteTgaFile(outFile);
             Console.WriteLine("new file unload");
             Console.WriteLine("Scaled");
-            image.Scale(new Size(510,510));
+            image.Scale(new Size(510, 510));
             image.WriteTgaFile(outScaleFile);
             Console.WriteLine("new scaled file unload");
         }
