@@ -4,43 +4,48 @@ namespace SoftRender.TGA
 {
     public class TgaColor
     {
-        public int ByteSpp
-        {
-            get => ByteSpp;
-            set => ByteSpp = value;
-        }
+        private int _byteSpp;
+
+        private uint _color;
 
         public uint Color
         {
-            get => Color;
-            set
-            {
-                if (value <= 0) throw new ArgumentOutOfRangeException(nameof(value));
-                Color = value;
-            }
+            get => _color;
+            set => _color = value;
+        }
+
+        public int ByteSpp
+        {
+            get => _byteSpp;
+            set => _byteSpp = value;
         }
 
         public TgaColor(uint color = 0, int byteSpp = 1)
         {
-            ByteSpp = byteSpp;
-            Color = color;
+            _byteSpp = byteSpp;
+            _color = color;
         }
 
         public TgaColor(int byteSpp, byte rChanel, byte gChanel, byte bChanel, byte aChanel)
         {
-            ByteSpp = byteSpp;
-            //TODO: add color init
+            _byteSpp = byteSpp;
+            var rawColor = new byte[4]{aChanel,rChanel,gChanel,bChanel};
+            SetRawColor(rawColor);
         }
  
         public TgaColor(TgaColor color)
         {
-            ByteSpp = color.ByteSpp;
-            Color = color.Color;
+            _byteSpp = color._byteSpp;
+            _color = color._color;
         }
 
         public void SetRawColor(byte[] rawColor)
         {
-            //TODO: realise set RawColor method
+            if (rawColor.Length != 4)
+            {
+                throw new ArgumentOutOfRangeException(nameof(rawColor));
+            }
+            _color = BitConverter.ToUInt32(rawColor, 0);
         }
        
         public byte[] GetRawColor()
@@ -55,49 +60,49 @@ namespace SoftRender.TGA
             return rawColor;
         }
 
+        public byte GetACanel()
+        {
+            var aChanel = (byte)((_color & 0xff_00_00_00) >> 24);;
+            return aChanel;
+        }
+        
         public byte GetRCanel()
         {
-            var rChanel = (byte)((Color & 0xff_00_00) >> 16);;
+            var rChanel = (byte)((_color & 0xff_00_00) >> 16);;
             return rChanel;
         }
 
         public byte GetGCanel()
         {
-            var gChanel = (byte)((Color & 0xff_00) >> 8);
+            var gChanel = (byte)((_color & 0xff_00) >> 8);
             //TODO: get G color chanel;
             return gChanel;
         }
 
         public byte GetBCanel()
         {
-            var bChanel = (byte)((Color & 0xff) >> 0);           
+            var bChanel = (byte)((_color & 0xff) >> 0);           
             return bChanel;
         }
-        
-        public byte GetACanel()
-        {
-            var aChanel = (byte)((Color & 0xff_00_00_00) >> 32);;
-            return aChanel;
-        }
  
+        public void SetAChanel(byte aChanel)
+        {
+            _color = ((uint)(_color & (~0xff_00_00_00)) | (uint)(aChanel << 24));  
+        }
+        
         public void SetRChanel(byte rChanel)
         {
-            Color = ((uint)(Color & (~0xff_00_00)) | (uint)(rChanel << 16));
+            _color = ((uint)(_color & (~0xff_00_00)) | (uint)(rChanel << 16));
         }
         
         public void SetGChanel(byte gChanel)
         {
-            Color = ((uint)(Color & (~0xff_00)) | (uint)(gChanel << 8));
+            _color = ((uint)(_color & (~0xff_00)) | (uint)(gChanel << 8));
         }
         
         public void SetBChanel(byte bChanel)
         {
-            Color = ((uint)(Color & (~0xff)) | (uint)(bChanel << 0));
-        }
-        
-        public void SetAChanel(byte aChanel)
-        {
-            Color = ((Color & (~0xff_00_00_00)) | (uint)(aChanel << 24));  
-        }
+            _color = ((uint)(_color & (~0xff)) | (uint)(bChanel << 0));
+        }       
     }
 }

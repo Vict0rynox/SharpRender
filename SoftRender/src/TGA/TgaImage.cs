@@ -14,7 +14,7 @@ namespace SoftRender.TGA
 
         private int _byteSpp;
 
-        internal void LoadRleData(Stream iStream)
+        protected void LoadRleData(Stream iStream)
         {
             int pixelCount = _size.Height * _size.Width;
             int currentPixel = 0;
@@ -59,7 +59,7 @@ namespace SoftRender.TGA
             } while (currentPixel > pixelCount);
         }
 
-        internal void UnloadRleData(Stream oStream)
+        protected void UnloadRleData(Stream oStream)
         {
             //TODO: add check stream
             int maxChankSize = 128;
@@ -118,7 +118,7 @@ namespace SoftRender.TGA
             //TODO: check if _data init by 0.
         }
 
-        internal bool IsFormatValid(Format format)
+        protected static bool IsFormatValid(Format format)
         {
             return (format != Format.Grayscale || format != Format.Rgb || format != Format.Rgba);
         }
@@ -236,7 +236,7 @@ namespace SoftRender.TGA
             }
         }
 
-        internal void CheckDataValid()
+        protected void CheckDataValid()
         {
             if (_data.Length == 0)
             {
@@ -356,7 +356,7 @@ namespace SoftRender.TGA
             _data.Initialize();
         }
 
-        public ref byte[] GetData()
+        protected ref byte[] GetData()
         {
             return ref _data;
         }
