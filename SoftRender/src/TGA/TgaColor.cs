@@ -2,10 +2,12 @@
 
 namespace SoftRender.TGA
 {
+    /// <summary>
+    /// TODO: add compare operator overload. 
+    /// TODO: add basic color contant|enum  
+    /// </summary>
     public class TgaColor
-    {
-        private int _byteSpp;
-
+    {        
         private uint _color;
 
         public uint Color
@@ -14,28 +16,28 @@ namespace SoftRender.TGA
             set => _color = value;
         }
 
-        public int ByteSpp
+        public TgaColor(uint color = 0)
         {
-            get => _byteSpp;
-            set => _byteSpp = value;
-        }
-
-        public TgaColor(uint color = 0, int byteSpp = 1)
-        {
-            _byteSpp = byteSpp;
             _color = color;
         }
 
-        public TgaColor(int byteSpp, byte rChanel, byte gChanel, byte bChanel, byte aChanel)
+        public TgaColor(byte[] rawColor)
         {
-            _byteSpp = byteSpp;
+            if (rawColor.Length > 4)
+            {
+                throw new ArgumentOutOfRangeException();
+            }
+            SetRawColor(rawColor);
+        }
+
+        public TgaColor(byte rChanel, byte gChanel, byte bChanel, byte aChanel)
+        {
             var rawColor = new byte[4]{aChanel,rChanel,gChanel,bChanel};
             SetRawColor(rawColor);
         }
  
         public TgaColor(TgaColor color)
         {
-            _byteSpp = color._byteSpp;
             _color = color._color;
         }
 

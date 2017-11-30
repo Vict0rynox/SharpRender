@@ -6,7 +6,146 @@ using System.Text;
 
 namespace SoftRender.TGA
 {
+    /// <summary>
+    /// TODO: add color handle relative by Format (Rgb|Rgba|Grayscale) 
+    /// </summary>
     public class TgaImage
+    {
+        public enum Format : uint
+        {
+            None = 0,
+            Grayscale = 1,
+            Rgb = 3,
+            Rgba = 4
+        } //maybe can be byte 
+
+        private byte[] _data;
+
+        private TgaHeader _header;
+
+        public Format TgaFormat { get; }
+
+        public TgaHeader TgaHeader
+        {
+            get => _header;
+        }
+
+        protected void ValidateSize(Size size)
+        {
+            if (size.Height <= 0 || size.Height > UInt16.MaxValue ||
+                size.Width <= 0 || size.Width > UInt16.MaxValue)
+            {
+                throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        public TgaImage(Size size, Format format)
+        {
+            ValidateSize(size);
+            if (format == Format.None)
+            {
+                throw new ArgumentException();
+            }
+            TgaFormat = format;
+            _header = new TgaHeader();
+            _header.Width = (short) size.Width;
+            _header.Height = (short) size.Height;
+            _header.BitSperPixel = (byte) ((uint) format << 3);
+            _header.ImageDescription = (byte) (format == Format.Grayscale ? 2 : 3); //withoute compression by deffault
+            _header.DataTypeCode = 0x20;
+            _data = new byte[_header.Width * _header.Height * (uint) TgaFormat];
+            _data.Initialize();
+        }
+
+        public TgaImage(TgaHeader header)
+        {
+            _header = header;
+            TgaFormat = (Format) (header.BitSperPixel >> 3);
+
+            _data = new byte[_header.Width * _header.Height * (uint) TgaFormat];
+            _data.Initialize();
+        }
+
+        public void Clear()
+        {
+            for (int i = 0; i < _data.Length; i++)
+            {
+                _data[i] = 0;
+            }
+        }
+
+        public void SetPointColor(Point point, TgaColor color)
+        {
+            if (point.X < 0 || point.X >= _header.Width ||
+                point.Y < 0 || point.Y >= _header.Height)
+            {
+                throw new ArgumentOutOfRangeException();
+            }
+            Array.ConstrainedCopy(color.GetRawColor(), 0, _data,
+                (point.X + (point.Y * _header.Width)) * (int) TgaFormat,
+                (int) TgaFormat);
+        }
+
+        public TgaColor GetPointColor(Point point)
+        {
+            if (point.X < 0 || point.X >= _header.Width ||
+                point.Y < 0 || point.Y >= _header.Height)
+            {
+                throw new ArgumentOutOfRangeException();
+            }
+            var rawColor = new byte[(int) TgaFormat];
+
+            Array.ConstrainedCopy(_data, (point.X + (point.Y * _header.Width)) * (int) TgaFormat, rawColor, 0,
+                (int) TgaFormat);
+            return new TgaColor(rawColor);
+        }
+
+        public void Scale(Size size)
+        {
+            ValidateSize(size);
+            var newData = new byte[size.Height * size.Width * (int) TgaFormat];
+
+            int newScanLine = 0;
+            int oldScanLine = 0;
+            int errY = 0;
+            int newLineBytes = size.Width * (int) TgaFormat;
+            int oldLineBytes = _header.Width * (int) TgaFormat;
+            for (int i = 0; i < _header.Height; i++)
+            {
+                int errX = _header.Width - size.Width;
+                int newX = -(int) TgaFormat;
+                int oldX = -(int) TgaFormat;
+                for (int j = 0; j < _header.Width; j++)
+                {
+                    oldX += (int) TgaFormat;
+                    errX += size.Width;
+                    while (errX >= _header.Width)
+                    {
+                        errX -= _header.Width;
+                        newX += (int) TgaFormat;
+                        Array.ConstrainedCopy(_data, oldScanLine + oldX, newData, newScanLine + newX, (int) TgaFormat);
+                    }
+                }
+                errY += size.Height;
+                oldScanLine += oldLineBytes;
+                while (errY >= _header.Height)
+                {
+                    if (errY >= (int) _header.Height << 1)
+                    {
+                        Array.ConstrainedCopy(newData, newScanLine, newData, newLineBytes + newScanLine, newLineBytes);
+                    }
+                    errY -= _header.Height;
+                    newScanLine += newLineBytes;
+                }
+            }
+            _data = newData;
+            _header.Width = (short) size.Width;
+            _header.Height = (short) size.Height;
+        }
+    }
+
+    [System.Obsolete("Class is deprecated. Use TgaImage.", true)]
+    public class TgaImage1
     {
         private byte[] _data;
 
@@ -100,7 +239,7 @@ namespace SoftRender.TGA
             }
         }
 
-        public enum Format
+        public enum Format : uint
         {
             None = 0,
             Grayscale = 1,
@@ -108,22 +247,13 @@ namespace SoftRender.TGA
             Rgba = 4
         };
 
-        public TgaImage(Size size, int byteSpp)
-        {
-            _size = size;
-            _byteSpp = byteSpp;
-            var nBytes = (ulong) (size.Width * size.Height * byteSpp);
-            _data = new byte[nBytes];
-            _data.Initialize();
-            //TODO: check if _data init by 0.
-        }
-
         protected static bool IsFormatValid(Format format)
         {
             return (format != Format.Grayscale || format != Format.Rgb || format != Format.Rgba);
         }
 
-        public TgaImage(string fileName)
+        //TODO: move to another class
+        public TgaImage1(string fileName)
         {
             _data = null; //reset data
             FileStream fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
@@ -186,6 +316,7 @@ namespace SoftRender.TGA
             }
         }
 
+        //TODO: move to another class
         public void WriteTgaFile(string fileName, bool rle = true)
         {
             byte[] developerAreaRef = {0, 0, 0, 0};
@@ -244,7 +375,7 @@ namespace SoftRender.TGA
             }
         }
 
-        public void FlipHorizontally()
+        protected void FlipHorizontally()
         {
             CheckDataValid();
             int half = _size.Width >> 1;
@@ -262,7 +393,7 @@ namespace SoftRender.TGA
             }
         }
 
-        public void FlipVertically()
+        protected void FlipVertically()
         {
             CheckDataValid();
             int bytesPerLine = (_size.Width * _byteSpp);
@@ -276,6 +407,20 @@ namespace SoftRender.TGA
                 Array.ConstrainedCopy(_data, l2, _data, l1, bytesPerLine);
                 Array.ConstrainedCopy(line, 0, _data, l2, bytesPerLine);
             }
+        }
+
+        protected ref byte[] GetData()
+        {
+            return ref _data;
+        }
+
+        public TgaImage1(Size size, int byteSpp)
+        {
+            _size = size;
+            _byteSpp = byteSpp;
+            var nBytes = (ulong) (size.Width * size.Height * byteSpp);
+            _data = new byte[nBytes];
+            _data.Initialize();
         }
 
         public void Scale(Size size)
@@ -313,7 +458,7 @@ namespace SoftRender.TGA
                 {
                     if (errY >= (int) _size.Height << 1)
                     {
-                        Array.ConstrainedCopy(data, newScanLine, data, newLineBytes+newScanLine, newLineBytes);
+                        Array.ConstrainedCopy(data, newScanLine, data, newLineBytes + newScanLine, newLineBytes);
                     }
                     errY -= _size.Height;
                     newScanLine += newLineBytes;
@@ -345,7 +490,6 @@ namespace SoftRender.TGA
                 throw new ArgumentOutOfRangeException("point " + point.ToString());
             }
             var bytes = new byte[_byteSpp];
-            color.ByteSpp = _byteSpp;
             Array.ConstrainedCopy(_data, point.X + point.Y * _size.Width, bytes, 0, _byteSpp);
             color.SetRawColor(bytes);
             return color;
@@ -354,11 +498,6 @@ namespace SoftRender.TGA
         public void Clear()
         {
             _data.Initialize();
-        }
-
-        protected ref byte[] GetData()
-        {
-            return ref _data;
         }
 
         public Size GetSize()
